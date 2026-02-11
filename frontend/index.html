@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSIDC Industrial Land Monitoring System</title>
+    <title>CSIDC Industrial Land Monitoring & Drone Survey System</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     
     <!-- Custom CSS -->
     <style>
@@ -20,6 +23,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             height: 100vh;
             overflow: hidden;
+            background-color: #f8f9fa;
         }
 
         /* Header */
@@ -27,51 +31,125 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 15px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
             z-index: 1000;
             position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .header h1 {
-            font-size: 24px;
+        .header-left h1 {
+            font-size: 20px;
             font-weight: 600;
+            margin-bottom: 3px;
         }
 
-        .header p {
-            font-size: 14px;
+        .header-left p {
+            font-size: 12px;
             opacity: 0.9;
-            margin-top: 5px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
 
         /* Main container */
         .container {
             display: flex;
-            height: calc(100vh - 80px);
+            height: calc(100vh - 75px);
         }
 
-        /* Sidebar */
+        /* Enhanced Sidebar */
         .sidebar {
-            width: 350px;
-            background: #f8f9fa;
+            width: 380px;
+            background: #ffffff;
             border-right: 1px solid #dee2e6;
             overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
             padding: 20px;
         }
 
-        .sidebar h2 {
-            font-size: 18px;
-            margin-bottom: 15px;
-            color: #333;
+        .tab-content.active {
+            display: block;
         }
 
-        /* Controls */
+        .sidebar h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Enhanced Controls */
         .control-group {
             margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
         }
 
         .control-group label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             margin-bottom: 8px;
             color: #495057;
@@ -82,72 +160,83 @@
             width: 100%;
             padding: 10px;
             border: 1px solid #ced4da;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 14px;
+            transition: border-color 0.3s;
         }
 
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Enhanced Buttons */
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 12px 15px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
             background: #6c757d;
             color: white;
-            margin-top: 10px;
         }
 
-        .btn-secondary:hover {
-            background: #5a6268;
+        .btn-success {
+            background: #28a745;
+            color: white;
         }
 
-        /* Legend */
-        .legend {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
         }
 
-        .legend h3 {
-            font-size: 16px;
-            margin-bottom: 12px;
-            color: #333;
+        .btn-danger {
+            background: #dc3545;
+            color: white;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            font-size: 13px;
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
         }
 
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
-            margin-right: 10px;
-            border: 1px solid rgba(0,0,0,0.1);
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
         }
 
-        /* Statistics */
-        .stats {
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
@@ -155,196 +244,1075 @@
         }
 
         .stat-card {
-            background: white;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             text-align: center;
+            border: 1px solid #dee2e6;
         }
 
-        .stat-card .value {
+        .stat-number {
             font-size: 24px;
             font-weight: bold;
             color: #667eea;
-        }
-
-        .stat-card .label {
-            font-size: 12px;
-            color: #6c757d;
-            margin-top: 5px;
-        }
-
-        /* Map container */
-        #map {
-            flex: 1;
-            height: 100%;
-        }
-
-        /* Loading spinner */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 10px;
-            background: #fff3cd;
-            border-radius: 5px;
-            margin-top: 10px;
-        }
-
-        .loading.active {
             display: block;
         }
 
-        /* Info panel */
-        .info-panel {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .info-panel h3 {
-            font-size: 16px;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .info-panel p {
-            font-size: 13px;
-            color: #495057;
-            margin-bottom: 8px;
-        }
-
-        /* Custom popup */
-        .custom-popup {
-            font-size: 13px;
-        }
-
-        .custom-popup h4 {
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .custom-popup .violation-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 3px;
+        .stat-label {
             font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
             font-weight: 600;
             margin-top: 5px;
         }
 
-        .badge-encroachment { background: #dc3545; color: white; }
-        .badge-illegal_construction { background: #fd7e14; color: white; }
-        .badge-unused_land { background: #ffc107; color: #000; }
-        .badge-suspicious_change { background: #17a2b8; color: white; }
-        .badge-compliant { background: #28a745; color: white; }
+        /* Layer Toggle */
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+
+        .layer-toggle:hover {
+            background: #e9ecef;
+        }
+
+        .layer-toggle label {
+            margin: 0;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        /* Map Controls Overlay */
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-panel {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Export Panel */
+        .export-panel {
+            min-width: 200px;
+        }
+
+        .export-panel h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group {
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffc107, #ffb02e);
+            color: #212529;
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #17a2b8, #007bff);
+        }
+
+        /* Custom Leaflet Popup Styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin: -12px -15px 10px;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .popup-content {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .popup-content .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .popup-content .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .popup-content .info-value {
+            color: #333;
+        }
+
+        /* Legend Styles */
+        .legend {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* CSIDC Portal Style Elements */
+        .portal-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .area-type-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+        .badge-industrial { background: #FF6B6B; color: white; }
+        .badge-landbank { background: #4ECDC4; color: white; }
+        .badge-old-industrial { background: #45B7D1; color: white; }
+        .badge-directorate { background: #96CEB4; color: white; }
+        .badge-amenity { background: #FFEAA7; color: #333; }
+
+        .sync-time {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 320px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+                order: 2;
+            }
+            
+            .map-container {
+                order: 1;
+                height: calc(100vh - 375px);
+            }
+            
+            .header {
+                padding: 10px 20px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
-        <h1>🛰️ CSIDC Industrial Land Monitoring System</h1>
-        <p>AI-Powered Violation Detection | Powered by Sentinel-2, Landsat & Machine Learning</p>
+        <div class="header-left">
+            <h1><i class="fas fa-satellite"></i> CSIDC Industrial Land Monitoring & Drone Survey System</h1>
+            <p>Comprehensive monitoring with satellite imagery, AI detection, and drone survey integration</p>
+        </div>
+        <div class="header-right">
+            <div class="sync-status" id="syncStatus">
+                <div class="sync-indicator"></div>
+                <span>CSIDC Portal Synced</span>
+                <span class="sync-time" id="syncTime">Just now</span>
+            </div>
+        </div>
     </div>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Sidebar -->
+        <!-- Enhanced Sidebar with Tabs -->
         <div class="sidebar">
-            <h2>Control Panel</h2>
-
-            <!-- Statistics -->
-            <div class="stats">
-                <div class="stat-card">
-                    <div class="value" id="total-plots">0</div>
-                    <div class="label">Total Plots</div>
-                </div>
-                <div class="stat-card">
-                    <div class="value" id="total-violations">0</div>
-                    <div class="label">Violations</div>
-                </div>
+            <div class="sidebar-tabs">
+                <button class="tab-button active" onclick="switchTab('monitoring')">
+                    <i class="fas fa-search"></i><br>Monitoring
+                </button>
+                <button class="tab-button" onclick="switchTab('csidc')">
+                    <i class="fas fa-industry"></i><br>CSIDC Areas
+                </button>
+                <button class="tab-button" onclick="switchTab('drone')">
+                    <i class="fas fa-drone"></i><br>Drone Surveys
+                </button>
+                <button class="tab-button" onclick="switchTab('analysis')">
+                    <i class="fas fa-chart-line"></i><br>Analysis
+                </button>
             </div>
 
-            <!-- Plot Selection -->
-            <div class="control-group">
-                <label for="plot-select">Select Plot</label>
-                <select id="plot-select">
-                    <option value="">-- Select a plot --</option>
-                </select>
+            <!-- Monitoring Tab -->
+            <div id="monitoring-tab" class="tab-content active">
+                <h2><i class="fas fa-search"></i> Plot Monitoring</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalPlots">-</span>
+                        <div class="stat-label">Total Plots</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="activeViolations">-</span>
+                        <div class="stat-label">Active Violations</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="plotId">Plot ID</label>
+                    <input type="text" id="plotId" placeholder="Enter plot ID or leave blank for all">
+                </div>
+
+                <div class="control-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+
+                <div class="control-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+
+                <button class="btn btn-primary" onclick="analyzeArea()">
+                    <i class="fas fa-satellite"></i> Get Satellite Data
+                </button>
+
+                <button class="btn btn-secondary" onclick="runAnalysis()">
+                    <i class="fas fa-brain"></i> Run AI Analysis  
+                </button>
+
+                <button class="btn btn-success" onclick="loadAllPlots()">
+                    <i class="fas fa-map"></i> Show All Plots
+                </button>
             </div>
 
-            <!-- Date Range -->
-            <div class="control-group">
-                <label for="start-date">Start Date</label>
-                <input type="date" id="start-date" />
+            <!-- CSIDC Areas Tab -->
+            <div id="csidc-tab" class="tab-content">
+                <h2><i class="fas fa-industry"></i> CSIDC Areas</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="industrialAreas">-</span>
+                        <div class="stat-label">Industrial Areas</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="landBanks">-</span>
+                        <div class="stat-label">Land Banks</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Area Types</label>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #FF6B6B;"></span>
+                            Industrial Areas
+                        </label>
+                        <div class="toggle-switch active" onclick="toggleLayer('industrial')" data-layer="industrial"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #4ECDC4;"></span>
+                            Land Banks
+                        </label>
+                        <div class="toggle-switch active" onclick="toggleLayer('landbank')" data-layer="landbank"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #45B7D1;"></span>
+                            Old Industrial
+                        </label>
+                        <div class="toggle-switch" onclick="toggleLayer('old_industrial')" data-layer="old_industrial"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #FFEAA7;;"></span>
+                            Amenities
+                        </label>
+                        <div class="toggle-switch" onclick="toggleLayer('amenities')" data-layer="amenities"></div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="districtFilter">District Filter</label>
+                    <select id="districtFilter" onchange="filterByDistrict()">
+                        <option value="">All Districts</option>
+                        <option value="Raipur">Raipur</option>
+                        <option value="Durg">Durg</option>
+                        <option value="Korba">Korba</option>
+                        <option value="Bilaspur">Bilaspur</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="syncCSIDCData()">
+                    <i class="fas fa-sync"></i> Sync CSIDC Portal
+                </button>
+
+                <button class="btn btn-outline" onclick="loadCSIDCAreas()">
+                    <i class="fas fa-map-marked-alt"></i> Load CSIDC Areas
+                </button>
             </div>
 
-            <div class="control-group">
-                <label for="end-date">End Date</label>
-                <input type="date" id="end-date" />
+            <!-- Drone Surveys Tab -->
+            <div id="drone-tab" class="tab-content">
+                <h2><i class="fas fa-drone"></i> Drone Surveys</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalSurveys">-</span>
+                        <div class="stat-label">Total Surveys</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="recentSurveys">-</span>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyType">Survey Type</label>
+                    <select id="surveyType">
+                        <option value="">All Types</option>
+                        <option value="routine">Routine</option>
+                        <option value="violation_check">Violation Check</option>
+                        <option value="baseline">Baseline</option>
+                        <option value="special">Special</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyDateFrom">Survey Date From</label>
+                    <input type="date" id="surveyDateFrom">
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyDateTo">Survey Date To</label>
+                    <input type="date" id="surveyDateTo">
+                </div>
+
+                <button class="btn btn-primary" onclick="loadDroneSurveys()">
+                    <i class="fas fa-map"></i> Load Survey Data
+                </button>
+
+                <button class="btn btn-success" onclick="createDroneSurvey()">
+                    <i class="fas fa-plus"></i> Create New Survey
+                </button>
+
+                <button class="btn btn-warning" onclick="analyzeDroneData()">
+                    <i class="fas fa-cog"></i> Analyze Recent Surveys
+                </button>
             </div>
 
-            <!-- Actions -->
-            <button class="btn btn-primary" onclick="loadSatelliteData()">
-                📡 Load Satellite Data
-            </button>
-
-            <button class="btn btn-primary" onclick="analyizePlot()" style="margin-top: 10px;">
-                🔍 Analyze Plot
-            </button>
-
-            <button class="btn btn-secondary" onclick="loadAllPlots()">
-                🗺️ Show All Plots
-            </button>
-
-            <!-- Loading indicator -->
-            <div class="loading" id="loading">
-                <p>⏳ Processing... Please wait</p>
-            </div>
-
-            <!-- Legend -->
-            <div class="legend">
-                <h3>Violation Types</h3>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #dc3545;"></div>
-                    <span>Encroachment</span>
+            <!-- Analysis Tab -->
+            <div id="analysis-tab" class="tab-content">
+                <h2><i class="fas fa-chart-line"></i> Analysis & Reports</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="violationRate">-</span>
+                        <div class="stat-label">Violation Rate %</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="complianceScore">-</span>
+                        <div class="stat-label">Compliance Score</div>
+                    </div>
                 </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #fd7e14;"></div>
-                    <span>Illegal Construction</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #ffc107;"></div>
-                    <span>Unused Land</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #17a2b8;"></div>
-                    <span>Suspicious Change</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #28a745;"></div>
-                    <span>Compliant</span>
-                </div>
-            </div>
 
-            <!-- Info Panel -->
-            <div class="info-panel" id="info-panel">
-                <h3>Information</h3>
-                <p>Select a plot to view details and analysis</p>
+                <div class="control-group">
+                    <label>Analysis Options</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="includeChange" checked>
+                            Change Detection Analysis
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeThermal" checked>
+                            Thermal Analysis
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeVegetation">
+                            Vegetation Index (NDVI)
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeBuiltup">
+                            Built-up Index (NDBI)
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-file-alt"></i> Generate Report
+                </button>
+
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+
+                <button class="btn btn-warning" onclick="runBatchAnalysis()">
+                    <i class="fas fa-tasks"></i> Batch Analysis
+                </button>
             </div>
         </div>
 
-        <!-- Map -->
-        <div id="map"></div>
+        <!-- Map Container with Enhanced Controls -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Map Controls Overlay -->
+            <div class="map-controls">
+                <!-- Export Panel -->
+                <div class="control-panel export-panel">
+                    <h3><i class="fas fa-download"></i> Quick Export</h3>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="exportIndustrial" checked> Industrial Areas</label>
+                        <label><input type="checkbox" id="exportLandbank" checked> Land Banks</label>
+                        <label><input type="checkbox" id="exportAmenities"> Amenities</label>
+                        <label><input type="checkbox" id="exportViolations"> Violations</label>
+                    </div>
+                    <select id="exportFormat" style="width: 100%; margin-bottom: 10px;">
+                        <option value="geojson">GeoJSON</option>
+                        <option value="kml">KML</option>
+                        <option value="csv">CSV</option>
+                        <option value="shapefile">Shapefile</option>
+                    </select>
+                    <button class="btn btn-success" onclick="quickExport()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Notifications Container -->
+    <div id="notifications"></div>
+
+    <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Custom Map JS -->
-    <script src="leaflet_map.js"></script>
+    <!-- Enhanced JavaScript -->
+    <script>
+        // Enhanced global variables
+        let map;
+        let plotLayers = L.layerGroup();
+        let csidcLayers = {
+            industrial: L.layerGroup(),
+            landbank: L.layerGroup(),
+            old_industrial: L.layerGroup(),
+            amenities: L.layerGroup()
+        };
+        let droneLayers = L.layerGroup();
+        let currentData = {
+            plots: [],
+            areas: [],
+            surveys: [],
+            statistics: {}
+        };
+
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api/v1';
+        
+        // Color schemes matching CSIDC portal
+        const AREA_COLORS = {
+            industrial_area: '#FF6B6B',
+            land_bank: '#4ECDC4', 
+            old_industrial: '#45B7D1',
+            directorate_industrial: '#96CEB4',
+            amenity: '#FFEAA7'
+        };
+
+        // Initialize enhanced map
+        function initMap() {
+            // Create map centered on Chhattisgarh
+            map = L.map('map').setView([20.5, 81.6], 7);
+
+            // Add multiple base layers
+            const baseLayers = {
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }),
+                "Terrain": L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png', {
+                    attribution: 'Map tiles by Stamen Design, CC BY 3.0'
+                }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '© Esri, DigitalGlobe, GeoEye, i-cubed, USDA, USGS, AEX, Getmapping, Aerogrid, IGN, IGP, swisstopo, and the GIS User Community'
+                })
+            };
+
+            // Add default layer
+            baseLayers["OpenStreetMap"].addTo(map);
+
+            // Create overlay layers
+            const overlayLayers = {
+                "Plots": plotLayers,
+                "Industrial Areas": csidcLayers.industrial,
+                "Land Banks": csidcLayers.landbank,
+                "Old Industrial": csidcLayers.old_industrial,
+                "Amenities": csidcLayers.amenities,
+                "Drone Surveys": droneLayers
+            };
+
+            // Add layer control
+            L.control.layers(baseLayers, overlayLayers, {position: 'topleft'}).addTo(map);
+
+            // Add all overlay layers to map initially
+            Object.values(csidcLayers).forEach(layer => layer.addTo(map));
+            plotLayers.addTo(map);
+            droneLayers.addTo(map);
+
+            // Add custom legend
+            addLegend();
+            
+            // Load initial data
+            loadCSIDCAreas();
+            updateStatistics();
+            
+            // Set sync time
+            updateSyncTime();
+        }
+
+        // Enhanced tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab
+            event.target.closest('.tab-button').classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Enhanced layer toggling
+        function toggleLayer(layerType) {
+            const toggleSwitch = event.target;
+            const isActive = toggleSwitch.classList.contains('active');
+            
+            if (isActive) {
+                toggleSwitch.classList.remove('active');
+                map.removeLayer(csidcLayers[layerType]);
+            } else {
+                toggleSwitch.classList.add('active');
+                map.addLayer(csidcLayers[layerType]);
+            }
+        }
+
+        // Enhanced CSIDC data loading
+        async function loadCSIDCAreas() {
+            showLoading('Loading CSIDC areas...');
+            
+            try {
+                // Create mock data for demonstration
+                const mockAreas = [
+                    {
+                        area_id: 1,
+                        name: "Raipur Industrial Area",
+                        area_type: "industrial_area",
+                        status: "operational",
+                        size_hectares: 1250.5,
+                        district: "Raipur",
+                        authority: "CSIDC",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [[[81.63, 21.25], [81.68, 21.25], [81.68, 21.20], [81.63, 21.20], [81.63, 21.25]]]
+                        }
+                    },
+                    {
+                        area_id: 2,
+                        name: "Korba Land Bank",
+                        area_type: "land_bank",
+                        status: "available",
+                        size_hectares: 850.2,
+                        district: "Korba",
+                        authority: "CSIDC",
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [[[82.65, 22.35], [82.72, 22.35], [82.72, 22.30], [82.65, 22.30], [82.65, 22.35]]]
+                        }
+                    },
+                    {
+                        area_id: 3,
+                        name: "Industrial Training Institute",
+                        area_type: "amenity",
+                        status: "operational",
+                        district: "Raipur",
+                        geometry: {
+                            type: "Point",
+                            coordinates: [81.65, 21.23]
+                        }
+                    }
+                ];
+
+                // Clear existing layers
+                Object.values(csidcLayers).forEach(layer => layer.clearLayers());
+                
+                // Add areas to map
+                mockAreas.forEach(area => {
+                    const layerKey = area.area_type === 'industrial_area' ? 'industrial' : 
+                                    area.area_type === 'land_bank' ? 'landbank' : 
+                                    'amenities';
+                    addAreaToMap(area, layerKey);
+                });
+                
+                currentData.areas = mockAreas;
+                showNotification('CSIDC areas loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading CSIDC areas:', error);
+                showNotification('Error loading CSIDC areas', 'error');
+            }
+            
+            hideLoading();
+        }
+
+        // Add area to map with enhanced styling
+        function addAreaToMap(area, layerType) {
+            if (!area.geometry) return;
+            
+            const color = AREA_COLORS[area.area_type] || '#666666';
+            
+            let layer;
+            if (area.geometry.type === 'Point') {
+                // For amenities (points)
+                layer = L.circleMarker([area.geometry.coordinates[1], area.geometry.coordinates[0]], {
+                    radius: 8,
+                    fillColor: color,
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+            } else {
+                // For polygonal areas
+                layer = L.geoJSON(area.geometry, {
+                    style: {
+                        color: color,
+                        weight: 2,
+                        opacity: 0.8,
+                        fillColor: color,
+                        fillOpacity: 0.3
+                    }
+                });
+            }
+            
+            // Enhanced popup content
+            const popupContent = createAreaPopup(area);
+            layer.bindPopup(popupContent);
+            
+            // Add to appropriate layer group
+            csidcLayers[layerType].addLayer(layer);
+        }
+
+        // Create enhanced popup for areas
+        function createAreaPopup(area) {
+            const statusBadge = area.status ? `<span class="area-type-badge badge-${area.area_type.replace('_', '-')}">${area.status.toUpperCase()}</span>` : '';
+            const portalBadge = area.portal_id ? '<span class="portal-badge">CSIDC Portal</span>' : '';
+            
+            return `
+                <div class="popup-header">
+                    ${area.name}
+                </div>
+                <div class="popup-content">
+                    <div class="info-row">
+                        <span class="info-label">Type:</span>
+                        <span class="info-value">${area.area_type.replace('_', ' ').toUpperCase()}</span>
+                    </div>
+                    ${area.size_hectares ? `
+                        <div class="info-row">
+                            <span class="info-label">Size:</span>
+                            <span class="info-value">${area.size_hectares.toFixed(1)} hectares</span>
+                        </div>
+                    ` : ''}
+                    ${area.district ? `
+                        <div class="info-row">
+                            <span class="info-label">District:</span>
+                            <span class="info-value">${area.district}</span>
+                        </div>
+                    ` : ''}
+                    ${area.authority ? `
+                        <div class="info-row">
+                            <span class="info-label">Authority:</span>
+                            <span class="info-value">${area.authority}</span>
+                        </div>
+                    ` : ''}
+                    <div style="margin-top: 10px;">
+                        ${statusBadge}
+                        ${portalBadge}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update statistics display
+        function updateStatistics() {
+            // Mock statistics
+            document.getElementById('totalPlots').textContent = '125';
+            document.getElementById('activeViolations').textContent = '8';
+            document.getElementById('industrialAreas').textContent = '12';
+            document.getElementById('landBanks').textContent = '5';
+            document.getElementById('totalSurveys').textContent = '34';
+            document.getElementById('recentSurveys').textContent = '7';
+            document.getElementById('violationRate').textContent = '6.4';
+            document.getElementById('complianceScore').textContent = '94.2';
+        }
+
+        // Enhanced notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide and remove notification
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Loading overlay functions
+        function showLoading(text = 'Loading...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        // Update sync time
+        function updateSyncTime() {
+            document.getElementById('syncTime').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Add legend to map
+        function addLegend() {
+            const legend = L.control({position: 'bottomright'});
+            
+            legend.onAdd = function (map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `
+                    <h4>CSIDC Areas Legend</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${AREA_COLORS.industrial_area};"></div>
+                        Industrial Areas
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${AREA_COLORS.land_bank};"></div>
+                        Land Banks
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${AREA_COLORS.old_industrial};"></div>
+                        Old Industrial
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${AREA_COLORS.amenity};"></div>
+                        Amenities
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #FF9800; border-style: dashed;"></div>
+                        Drone Surveys
+                    </div>
+                `;
+                return div;
+            };
+            
+            legend.addTo(map);
+        }
+
+        // Placeholder functions for functionality
+        function analyzeArea() { showNotification('Satellite data analysis feature coming soon', 'info'); }
+        function runAnalysis() { showNotification('AI analysis feature coming soon', 'info'); }
+        function loadAllPlots() { showNotification('Plot loading feature coming soon', 'info'); }
+        function filterByDistrict() { showNotification('District filtering applied', 'info'); }
+        function createDroneSurvey() { showNotification('Drone survey creation feature coming soon', 'info'); }
+        function analyzeDroneData() { showNotification('Drone data analysis feature coming soon', 'info'); }
+        function generateReport() { showNotification('Report generation feature coming soon', 'info'); }
+        function exportData() { showNotification('Data export feature coming soon', 'info'); }
+        function runBatchAnalysis() { showNotification('Batch analysis feature coming soon', 'info'); }
+        function syncCSIDCData() { 
+            showLoading('Syncing with CSIDC portal...');
+            setTimeout(() => {
+                hideLoading();
+                showNotification('CSIDC portal synced successfully', 'success');
+                updateSyncTime();
+            }, 2000);
+        }
+        function loadDroneSurveys() { showNotification('Loading drone surveys feature coming soon', 'info'); }
+        async function quickExport() {
+            showLoading('Preparing export...');
+            
+            try {
+                // Get selections from the export panel
+                const industrialAreas = document.getElementById('exportIndustrial').checked;
+                const landBanks = document.getElementById('exportLandbank').checked;
+                const amenities = document.getElementById('exportAmenities').checked;
+                const violations = document.getElementById('exportViolations').checked;
+                const format = document.getElementById('exportFormat').value;
+                
+                // Build query parameters
+                const params = new URLSearchParams({
+                    industrial_areas: industrialAreas,
+                    land_banks: landBanks,
+                    amenities: amenities,
+                    violations: violations,
+                    format: format
+                });
+                
+                // Make request to backend
+                const response = await fetch(`${API_BASE}/quick-export`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
+                });
+                
+                if (response.ok) {
+                    // Get filename from response headers
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    const filename = contentDisposition 
+                        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+                        : `csidc_export.${format}`;
+                    
+                    // Create download
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    hideLoading();
+                    showNotification(`Export completed successfully: ${filename}`, 'success');
+                } else {
+                    throw new Error(`Export failed: ${response.status}`);
+                }
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Export error:', error);
+                showNotification('Export failed. Please try again.', 'error');
+            }
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default dates
+            const today = new Date();
+            const oneMonthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+            
+            document.getElementById('startDate').value = oneMonthAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('surveyDateFrom').value = oneMonthAgo.toISOString().split('T')[0];
+            document.getElementById('surveyDateTo').value = today.toISOString().split('T')[0];
+            
+            // Initialize map
+            initMap();
+        });
+    </script>
 </body>
 </html>

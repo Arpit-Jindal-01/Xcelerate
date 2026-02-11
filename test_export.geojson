@@ -1,0 +1,166 @@
+{
+  "type": "FeatureCollection",
+  "metadata": {
+    "export_date": "2026-02-12T02:26:48.992931",
+    "source": "CSIDC Monitoring System",
+    "total_features": 4
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.63,
+              21.25
+            ],
+            [
+              81.68,
+              21.25
+            ],
+            [
+              81.68,
+              21.2
+            ],
+            [
+              81.63,
+              21.2
+            ],
+            [
+              81.63,
+              21.25
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "area_id": 1,
+        "name": "Raipur Industrial Area",
+        "area_type": "industrial_area",
+        "status": "operational",
+        "district": "Raipur",
+        "size_hectares": 1250.5,
+        "authority": "CSIDC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              81.28,
+              21.19
+            ],
+            [
+              81.33,
+              21.19
+            ],
+            [
+              81.33,
+              21.15
+            ],
+            [
+              81.28,
+              21.15
+            ],
+            [
+              81.28,
+              21.19
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "area_id": 3,
+        "name": "Durg Manufacturing Zone",
+        "area_type": "industrial_area",
+        "status": "operational",
+        "district": "Durg",
+        "size_hectares": 625.8,
+        "authority": "CSIDC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              82.65,
+              22.35
+            ],
+            [
+              82.72,
+              22.35
+            ],
+            [
+              82.72,
+              22.3
+            ],
+            [
+              82.65,
+              22.3
+            ],
+            [
+              82.65,
+              22.35
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "area_id": 2,
+        "name": "Korba Land Bank",
+        "area_type": "land_bank",
+        "status": "available",
+        "district": "Korba",
+        "size_hectares": 850.2,
+        "authority": "CSIDC"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              82.15,
+              22.08
+            ],
+            [
+              82.22,
+              22.08
+            ],
+            [
+              82.22,
+              22.02
+            ],
+            [
+              82.15,
+              22.02
+            ],
+            [
+              82.15,
+              22.08
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "area_id": 4,
+        "name": "Bilaspur Land Bank",
+        "area_type": "land_bank",
+        "status": "available",
+        "district": "Bilaspur",
+        "size_hectares": 1180.3,
+        "authority": "CSIDC"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSIDC Industrial Land Monitoring & Drone Survey System</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .header-left p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Main container */
+        .container {
+            display: flex;
+            height: calc(100vh - 75px);
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: 380px;
+            background: #ffffff;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+        }
+
+        .sidebar-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sidebar h2 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Enhanced Controls */
+        .control-group {
+            margin-bottom: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .control-group input,
+        .control-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Enhanced Buttons */
+        .btn {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        /* Map Container */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+        }
+
+        /* Map Controls Overlay */
+        .map-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-panel {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* Export Panel */
+        .export-panel {
+            min-width: 200px;
+        }
+
+        .export-panel h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group {
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 320px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: 300px;
+                order: 2;
+            }
+            
+            .map-container {
+                order: 1;
+                height: calc(100vh - 375px);
+            }
+            
+            .header {
+                padding: 10px 20px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffc107, #ffb02e);
+            color: #212529;
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #17a2b8, #007bff);
+        }
+
+        /* Custom Leaflet Popup Styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin: -12px -15px 10px;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .popup-content {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .popup-content .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .popup-content .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .popup-content .info-value {
+            color: #333;
+        }
+
+        /* Legend Styles */
+        .legend {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* CSIDC Portal Style Elements */
+        .portal-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .area-type-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+        .badge-industrial { background: #FF6B6B; color: white; }
+        .badge-landbank { background: #4ECDC4; color: white; }
+        .badge-old-industrial { background: #45B7D1; color: white; }
+        .badge-directorate { background: #96CEB4; color: white; }
+        .badge-amenity { background: #FFEAA7; color: #333; }
+
+        .sync-time {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+        }
+            background: linear-gradient(135deg, #dc3545, #e74c3c);
+        }
+
+        .notification.warning {
+            background: linear-gradient(135deg, #ffc107, #ffb02e);
+            color: #212529;
+        }
+
+        .notification.info {
+            background: linear-gradient(135deg, #17a2b8, #007bff);
+        }
+
+        /* Custom Leaflet Popup Styles */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            margin: -12px -15px 10px;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .popup-content {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .popup-content .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .popup-content .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .popup-content .info-value {
+            color: #333;
+        }
+
+        /* Legend Styles */
+        .legend {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            line-height: 1.6;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
+        .legend h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* CSIDC Portal Style Elements */
+        .portal-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .area-type-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+
+        .badge-industrial { background: #FF6B6B; color: white; }
+        .badge-landbank { background: #4ECDC4; color: white; }
+        .badge-old-industrial { background: #45B7D1; color: white; }
+        .badge-directorate { background: #96CEB4; color: white; }
+        .badge-amenity { background: #FFEAA7; color: #333; }
+
+        .sync-time {
+            font-size: 11px;
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1><i class="fas fa-satellite"></i> CSIDC Industrial Land Monitoring & Drone Survey System</h1>
+            <p>Comprehensive monitoring with satellite imagery, AI detection, and drone survey integration</p>
+        </div>
+        <div class="header-right">
+            <div class="sync-status" id="syncStatus">
+                <div class="sync-indicator"></div>
+                <span>CSIDC Portal Synced</span>
+                <span class="sync-time" id="syncTime">Just now</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Enhanced Sidebar with Tabs -->
+        <div class="sidebar">
+            <div class="sidebar-tabs">
+                <button class="tab-button active" onclick="switchTab('monitoring')">
+                    <i class="fas fa-search"></i><br>Monitoring
+                </button>
+                <button class="tab-button" onclick="switchTab('csidc')">
+                    <i class="fas fa-industry"></i><br>CSIDC Areas
+                </button>
+                <button class="tab-button" onclick="switchTab('drone')">
+                    <i class="fas fa-drone"></i><br>Drone Surveys
+                </button>
+                <button class="tab-button" onclick="switchTab('analysis')">
+                    <i class="fas fa-chart-line"></i><br>Analysis
+                </button>
+            </div>
+
+            <!-- Monitoring Tab -->
+            <div id="monitoring-tab" class="tab-content active">
+                <h2><i class="fas fa-search"></i> Plot Monitoring</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalPlots">-</span>
+                        <div class="stat-label">Total Plots</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="activeViolations">-</span>
+                        <div class="stat-label">Active Violations</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="plotId">Plot ID</label>
+                    <input type="text" id="plotId" placeholder="Enter plot ID or leave blank for all">
+                </div>
+
+                <div class="control-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+
+                <div class="control-group">
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+
+                <button class="btn btn-primary" onclick="analyzeArea()">
+                    <i class="fas fa-satellite"></i> Get Satellite Data
+                </button>
+
+                <button class="btn btn-secondary" onclick="runAnalysis()">
+                    <i class="fas fa-brain"></i> Run AI Analysis  
+                </button>
+
+                <button class="btn btn-success" onclick="loadAllPlots()">
+                    <i class="fas fa-map"></i> Show All Plots
+                </button>
+            </div>
+
+            <!-- CSIDC Areas Tab -->
+            <div id="csidc-tab" class="tab-content">
+                <h2><i class="fas fa-industry"></i> CSIDC Areas</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="industrialAreas">-</span>
+                        <div class="stat-label">Industrial Areas</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="landBanks">-</span>
+                        <div class="stat-label">Land Banks</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Area Types</label>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #FF6B6B;"></span>
+                            Industrial Areas
+                        </label>
+                        <div class="toggle-switch active" onclick="toggleLayer('industrial')" data-layer="industrial"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #4ECDC4;"></span>
+                            Land Banks
+                        </label>
+                        <div class="toggle-switch active" onclick="toggleLayer('landbank')" data-layer="landbank"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #45B7D1;"></span>
+                            Old Industrial
+                        </label>
+                        <div class="toggle-switch" onclick="toggleLayer('old_industrial')" data-layer="old_industrial"></div>
+                    </div>
+                    <div class="layer-toggle">
+                        <label>
+                            <span class="layer-color" style="background: #FFEAA7;;"></span>
+                            Amenities
+                        </label>
+                        <div class="toggle-switch" onclick="toggleLayer('amenities')" data-layer="amenities"></div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="districtFilter">District Filter</label>
+                    <select id="districtFilter" onchange="filterByDistrict()">
+                        <option value="">All Districts</option>
+                        <option value="Raipur">Raipur</option>
+                        <option value="Durg">Durg</option>
+                        <option value="Korba">Korba</option>
+                        <option value="Bilaspur">Bilaspur</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" onclick="syncCSIDCData()">
+                    <i class="fas fa-sync"></i> Sync CSIDC Portal
+                </button>
+
+                <button class="btn btn-outline" onclick="loadCSIDCAreas()">
+                    <i class="fas fa-map-marked-alt"></i> Load CSIDC Areas
+                </button>
+            </div>
+
+            <!-- Drone Surveys Tab -->
+            <div id="drone-tab" class="tab-content">
+                <h2><i class="fas fa-drone"></i> Drone Surveys</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="totalSurveys">-</span>
+                        <div class="stat-label">Total Surveys</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="recentSurveys">-</span>
+                        <div class="stat-label">This Month</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyType">Survey Type</label>
+                    <select id="surveyType">
+                        <option value="">All Types</option>
+                        <option value="routine">Routine</option>
+                        <option value="violation_check">Violation Check</option>
+                        <option value="baseline">Baseline</option>
+                        <option value="special">Special</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyDateFrom">Survey Date From</label>
+                    <input type="date" id="surveyDateFrom">
+                </div>
+
+                <div class="control-group">
+                    <label for="surveyDateTo">Survey Date To</label>
+                    <input type="date" id="surveyDateTo">
+                </div>
+
+                <button class="btn btn-primary" onclick="loadDroneSurveys()">
+                    <i class="fas fa-map"></i> Load Survey Data
+                </button>
+
+                <button class="btn btn-success" onclick="createDroneSurvey()">
+                    <i class="fas fa-plus"></i> Create New Survey
+                </button>
+
+                <button class="btn btn-warning" onclick="analyzeDroneData()">
+                    <i class="fas fa-cog"></i> Analyze Recent Surveys
+                </button>
+            </div>
+
+            <!-- Analysis Tab -->
+            <div id="analysis-tab" class="tab-content">
+                <h2><i class="fas fa-chart-line"></i> Analysis & Reports</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number" id="violationRate">-</span>
+                        <div class="stat-label">Violation Rate %</div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number" id="complianceScore">-</span>
+                        <div class="stat-label">Compliance Score</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Analysis Options</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="includeChange" checked>
+                            Change Detection Analysis
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeThermal" checked>
+                            Thermal Analysis
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeVegetation">
+                            Vegetation Index (NDVI)
+                        </label>
+                        <label>
+                            <input type="checkbox" id="includeBuiltup">
+                            Built-up Index (NDBI)
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-file-alt"></i> Generate Report
+                </button>
+
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> Export Data
+                </button>
+
+                <button class="btn btn-warning" onclick="runBatchAnalysis()">
+                    <i class="fas fa-tasks"></i> Batch Analysis
+                </button>
+            </div>
+        </div>
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* Layer Toggle */
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #dee2e6;
+            transition: all 0.3s;
+        }
+
+        .layer-toggle:hover {
+            background: #e9ecef;
+        }
+
+        .layer-toggle label {
+            margin: 0;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 22px;
+        }
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Legend */
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* Statistics */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* Map container */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Loading spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            background: #fff3cd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        /* Info panel */
+        .info-panel {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .info-panel h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .info-panel p {
+            font-size: 13px;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+
+        /* Custom popup */
+        .custom-popup {
+            font-size: 13px;
+        }
+
+        .custom-popup h4 {
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .custom-popup .violation-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .badge-encroachment { background: #dc3545; color: white; }
+        .badge-illegal_construction { background: #fd7e14; color: white; }
+        .badge-unused_land { background: #ffc107; color: #000; }
+        .badge-suspicious_change { background: #17a2b8; color: white; }
+        .badge-compliant { background: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🛰️ CSIDC Industrial Land Monitoring System</h1>
+        <p>AI-Powered Violation Detection | Powered by Sentinel-2, Landsat & Machine Learning</p>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h2>Control Panel</h2>
+
+            <!-- Statistics -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="value" id="total-plots">0</div>
+                    <div class="label">Total Plots</div>
+                </div>
+                <div class="stat-card">
+                    <div class="value" id="total-violations">0</div>
+                    <div class="label">Violations</div>
+                </div>
+            </div>
+
+            <!-- Plot Selection -->
+            <div class="control-group">
+                <label for="plot-select">Select Plot</label>
+                <select id="plot-select">
+                    <option value="">-- Select a plot --</option>
+                </select>
+            </div>
+
+            <!-- Date Range -->
+            <div class="control-group">
+                <label for="start-date">Start Date</label>
+                <input type="date" id="start-date" />
+            </div>
+
+            <div class="control-group">
+                <label for="end-date">End Date</label>
+                <input type="date" id="end-date" />
+            </div>
+
+            <!-- Actions -->
+            <button class="btn btn-primary" onclick="loadSatelliteData()">
+                📡 Load Satellite Data
+            </button>
+
+            <button class="btn btn-primary" onclick="analyizePlot()" style="margin-top: 10px;">
+                🔍 Analyze Plot
+            </button>
+
+            <button class="btn btn-secondary" onclick="loadAllPlots()">
+                🗺️ Show All Plots
+            </button>
+
+            <!-- Loading indicator -->
+            <div class="loading" id="loading">
+                <p>⏳ Processing... Please wait</p>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <h3>Violation Types</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #dc3545;"></div>
+                    <span>Encroachment</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fd7e14;"></div>
+                    <span>Illegal Construction</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffc107;"></div>
+                    <span>Unused Land</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #17a2b8;"></div>
+                    <span>Suspicious Change</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #28a745;"></div>
+                    <span>Compliant</span>
+                </div>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel" id="info-panel">
+                <h3>Information</h3>
+                <p>Select a plot to view details and analysis</p>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Custom Map JS -->
+    <script src="leaflet_map.js"></script>
+</body>
+</html>

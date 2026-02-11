@@ -33,6 +33,32 @@ class LandUseType(str, Enum):
     LOGISTICS = "logistics"
 
 
+class CSIDCAreaType(str, Enum):
+    INDUSTRIAL_AREA = "industrial_area"
+    LAND_BANK = "land_bank"
+    OLD_INDUSTRIAL = "old_industrial"
+    DIRECTORATE_INDUSTRIAL = "directorate_industrial"
+    AMENITY = "amenity"
+
+
+class AreaStatus(str, Enum):
+    OPERATIONAL = "operational"
+    AVAILABLE = "available"
+    UNDER_DEVELOPMENT = "under_development"
+    PLANNED = "planned"
+    CLOSED = "closed"
+
+
+class AmenityType(str, Enum):
+    EDUCATION = "education"
+    HEALTHCARE = "healthcare"
+    INFRASTRUCTURE = "infrastructure"
+    TRANSPORTATION = "transportation"
+    UTILITIES = "utilities"
+    FINANCE = "finance"
+    RECREATION = "recreation"
+
+
 # Base Schemas
 class GeoJSONGeometry(BaseModel):
     """GeoJSON Geometry schema"""
@@ -241,3 +267,199 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.now)
+
+
+# CSIDC Portal Schemas
+class CSIDCAreaBase(BaseModel):
+    """Base schema for CSIDC areas"""
+    name: str
+    area_type: CSIDCAreaType
+    status: AreaStatus = AreaStatus.OPERATIONAL
+    size_hectares: Optional[float] = None
+    district: Optional[str] = None
+    authority: Optional[str] = None
+    contact_info: Optional[str] = None
+
+
+class CSIDCAreaCreate(CSIDCAreaBase):
+    """Schema for creating CSIDC area"""
+    geometry: GeoJSONGeometry
+    established_date: Optional[datetime] = None
+    portal_id: Optional[str] = None
+
+
+class CSIDCAreaUpdate(BaseModel):
+    """Schema for updating CSIDC area"""
+    name: Optional[str] = None
+    status: Optional[AreaStatus] = None
+    size_hectares: Optional[float] = None
+    authority: Optional[str] = None
+    contact_info: Optional[str] = None
+
+
+class CSIDCAreaResponse(CSIDCAreaBase):
+    """Schema for CSIDC area response"""
+    area_id: int
+    geometry: GeoJSONGeometry
+    established_date: Optional[datetime] = None
+    portal_id: Optional[str] = None
+    last_updated_portal: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class IndustrialAreaBase(BaseModel):
+    """Base schema for industrial areas"""
+    industry_category: Optional[str] = None
+    total_plots: int = 0
+    occupied_plots: int = 0
+    power_capacity: Optional[str] = None
+    water_supply: bool = False
+    sewage_treatment: bool = False
+    road_connectivity: Optional[str] = None
+    total_investment: Optional[float] = None
+    employment_generated: Optional[int] = None
+
+
+class IndustrialAreaCreate(IndustrialAreaBase):
+    """Schema for creating industrial area details"""
+    csidc_area_id: int
+    banking_facilities: bool = False
+    training_center: bool = False
+    fire_safety: bool = False
+
+
+class IndustrialAreaResponse(IndustrialAreaBase):
+    """Schema for industrial area response"""
+    industrial_area_id: int
+    csidc_area_id: int
+    occupancy_rate: Optional[float] = None
+    banking_facilities: bool
+    training_center: bool
+    fire_safety: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class AmenityBase(BaseModel):
+    """Base schema for amenities"""
+    name: str
+    amenity_type: AmenityType
+    description: Optional[str] = None
+    status: AreaStatus = AreaStatus.OPERATIONAL
+    capacity: Optional[str] = None
+    operating_hours: Optional[str] = None
+    contact_info: Optional[str] = None
+    serves_areas: Optional[str] = None
+    service_radius_km: Optional[float] = None
+
+
+class AmenityCreate(AmenityBase):
+    """Schema for creating amenity"""
+    geometry: GeoJSONGeometry
+    area_id: Optional[int] = None
+    portal_id: Optional[str] = None
+
+
+class AmenityResponse(AmenityBase):
+    """Schema for amenity response"""
+    amenity_id: int
+    area_id: Optional[int] = None
+    geometry: GeoJSONGeometry
+    portal_id: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class DroneDataCollectionBase(BaseModel):
+    """Base schema for drone data collection"""
+    survey_date: datetime
+    survey_type: str
+    drone_model: Optional[str] = None
+    operator_name: Optional[str] = None
+    flight_height_m: Optional[float] = None
+    ground_resolution_cm: Optional[float] = None
+    weather_conditions: Optional[str] = None
+
+
+class DroneDataCollectionCreate(DroneDataCollectionBase):
+    """Schema for creating drone data collection record"""
+    area_id: Optional[int] = None
+    plot_id: Optional[str] = None
+    survey_geometry: GeoJSONGeometry
+    image_count: int = 0
+    video_duration_min: Optional[float] = None
+
+
+class DroneDataCollectionResponse(DroneDataCollectionBase):
+    """Schema for drone data collection response"""
+    collection_id: int
+    area_id: Optional[int] = None
+    plot_id: Optional[str] = None
+    survey_geometry: GeoJSONGeometry
+    image_count: int
+    video_duration_min: Optional[float] = None
+    data_size_gb: Optional[float] = None
+    raw_data_path: Optional[str] = None
+    processed_data_path: Optional[str] = None
+    violations_detected: int
+    change_areas_sqm: Optional[float] = None
+    analysis_completed: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+
+# Portal Integration Schemas
+class PortalSyncResponse(BaseModel):
+    """Schema for portal sync response"""
+    sync_id: int
+    area_type: CSIDCAreaType
+    sync_timestamp: datetime
+    status: str
+    records_fetched: int
+    records_updated: int
+    records_created: int
+    records_failed: int
+    error_message: Optional[str] = None
+    initiated_by: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+class CSIDCDataRequest(BaseModel):
+    """Schema for CSIDC portal data request"""
+    area_type: CSIDCAreaType
+    bbox: Optional[List[float]] = Field(None, min_items=4, max_items=4)
+    force_refresh: bool = False
+
+
+class CSIDCPortalStats(BaseModel):
+    """Schema for CSIDC portal statistics"""
+    industrial_areas: Dict[str, int]
+    land_banks: Dict[str, int]
+    amenities: Dict[str, int]
+    total_area_hectares: float
+    districts: List[str]
+    last_updated: datetime
+
+
+class ExportRequest(BaseModel):
+    """Schema for data export request"""
+    area_types: List[CSIDCAreaType]
+    format: str = Field(..., regex="^(geojson|shapefile|kml|csv)$")
+    bbox: Optional[List[float]] = Field(None, min_items=4, max_items=4)
+    include_amenities: bool = True
+    include_analysis_data: bool = False

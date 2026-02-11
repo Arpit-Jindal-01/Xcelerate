@@ -1,78 +1,118 @@
-# CSIDC Industrial Land Monitoring and Violation Detection System
+# CSIDC Industrial Land Monitoring & Drone Survey System
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)](https://fastapi.tiangolo.com/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.1-red.svg)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-🛰️ **Production-ready AI-powered system for industrial land monitoring using satellite imagery, deep learning, and PostGIS spatial analysis.**
+🛰️ **Production-ready AI-powered system for industrial land monitoring using satellite imagery, deep learning, and CSIDC portal integration.**
 
 Designed for **Chhattisgarh State Industrial Development Corporation (CSIDC)** to detect:
-- ✅ Encroachment
-- ✅ Illegal Construction
-- ✅ Unused Land
-- ✅ Suspicious Changes
+- ✅ Encroachment & Illegal Construction
+- ✅ Unused Land & Suspicious Changes  
+- ✅ Drone Survey Integration
+- ✅ Real-time Portal Synchronization
 
----
+## 🌟 Enhanced Features (Latest)
 
-## 🌟 Features
+### **CSIDC Portal Integration** 🌐
+- **Live Portal Sync** with https://cggis.cgstate.gov.in/csidc/
+- **WFS/WMS Services** for geospatial data
+- **Real-time Area Updates** from official CSIDC database
+- **District-wise Filtering** (Raipur, Korba, Durg, Bilaspur)
 
-### **Satellite Data Integration**
-- **Google Earth Engine** with Sentinel-2 Harmonized (10m resolution)
-- **Landsat 8/9 Thermal** data for heat signature detection
-- Automated cloud masking and composite generation
-- NDVI, NDBI indices computation
+### **Enhanced Web Interface** 🎨
+- **Professional 4-Tab Interface**: Monitoring, CSIDC Areas, Drone Surveys, Analysis
+- **Interactive Dashboard** with real-time statistics
+- **CSIDC Portal Styling** with official color schemes
+- **Responsive Design** optimized for all devices
+- **Export Panel** with one-click downloads
 
-### **AI/ML Models**
+### **Export Functionality** 📊
+- **Multiple Formats**: GeoJSON, CSV, KML, Shapefile
+- **Selective Export**: Choose Industrial Areas, Land Banks, Amenities
+- **Instant Downloads** with proper file naming
+- **GIS-Ready Data** for professional analysis
+
+### **Drone Survey Management** 🚁
+- **Survey Scheduling** and status tracking
+- **Route Planning** with area coverage calculation
+- **Data Integration** with satellite imagery
+- **Violation Verification** through drone imagery
+
+### **Core AI/ML Features** 🤖
 - **U-Net** for built-up area segmentation
 - **Siamese CNN** for temporal change detection
-- PyTorch-based inference pipeline
-- GPU-accelerated processing
+- **PyTorch-based** inference pipeline
+- **GPU-accelerated** processing
 
-### **Spatial Analysis**
-- PostgreSQL + PostGIS for geometric operations
-- ST_Contains, ST_Intersects, ST_Area, ST_Difference
-- Encroachment detection algorithm
-- Boundary violation analysis
+### **Spatial Analysis** 🗺️
+- **PostgreSQL + PostGIS** for geometric operations
+- **ST_Contains, ST_Intersects** boundary analysis
+- **Encroachment Detection** algorithm
+- **Area Calculation** and change monitoring
 
-### **Rule-Based Decision Engine**
-- Hierarchical violation classification
-- Explainable confidence scoring
-- Automated severity assessment
-- Actionable recommendations
-
-### **Web Interface**
-- Interactive Leaflet map visualization
-- Real-time plot monitoring
-- Color-coded violation status
-- Satellite imagery overlay
+### **Satellite Data Integration** 🛰️
+- **Google Earth Engine** with Sentinel-2 Harmonized (10m resolution)
+- **Landsat 8/9 Thermal** data for heat signature detection
+- **Automated Cloud Masking** and composite generation
+- **NDVI, NDBI Indices** computation
 
 ---
 
-## 📁 Project Structure
+## 🚀 Quick Start (Demo Mode)
+
+### **Instant Setup - No Database Required!**
+```bash
+# 1. Install basic dependencies
+pip install fastapi uvicorn
+
+# 2. Run demo application
+python demo_app.py
+
+# 3. Open browser
+# http://localhost:8000
+```
+
+**Demo includes:**
+- ✅ Working CSIDC portal interface
+- ✅ Sample areas from Raipur, Korba, Durg, Bilaspur
+- ✅ Export functionality (GeoJSON, CSV, KML)
+- ✅ Interactive maps with professional styling
+
+---
+
+## 📁 Enhanced Project Structure
 
 ```
-industrial-land-monitoring/
-├── backend/
-│   ├── main.py                      # FastAPI application
+xcelerate/
+├── demo_app.py                     # 🚀 MAIN DEMO APPLICATION (Quick start)
+├── frontend/
+│   ├── index.html                  # 🎨 Enhanced CSIDC Portal Interface
+│   ├── index_backup.html           # Original backup
+│   └── leaflet_map.js              # Map visualization logic
+├── backend/                        # 🏗️ Full Enterprise Backend
+│   ├── main.py                     # Enhanced FastAPI application
+│   ├── api/                        # 🆕 NEW API MODULES
+│   │   ├── csidc_router.py         # CSIDC areas management
+│   │   └── drone_router.py         # Drone survey operations
 │   ├── services/
-│   │   ├── gee_service.py          # Google Earth Engine integration
+│   │   ├── csidc_service.py        # 🆕 CSIDC portal integration
+│   │   ├── gee_service.py          # Google Earth Engine
 │   │   ├── ml_service.py           # ML inference service
-│   │   ├── spatial_service.py      # PostGIS spatial operations
+│   │   ├── spatial_service.py      # Enhanced PostGIS operations
 │   │   └── rule_engine.py          # Violation detection logic
 │   ├── models/
 │   │   ├── unet.py                 # U-Net segmentation model
 │   │   └── siamese.py              # Siamese CNN for change detection
 │   ├── database/
 │   │   ├── connection.py           # Database connection manager
-│   │   ├── models.py               # SQLAlchemy models
-│   │   └── schemas.py              # Pydantic schemas
+│   │   ├── models.py               # 🆕 Enhanced SQLAlchemy models
+│   │   └── schemas.py              # 🆕 Enhanced Pydantic schemas
 │   └── utils/
 │       ├── config.py               # Configuration management
 │       └── logger.py               # Logging setup
-├── frontend/
-│   ├── index.html                  # Web interface
-│   └── leaflet_map.js              # Map visualization logic
+├── exports/                        # 🆕 Export files directory
 ├── requirements.txt                # Python dependencies
 ├── .env.example                    # Environment variables template
 └── README.md                       # This file
@@ -82,19 +122,31 @@ industrial-land-monitoring/
 
 ## 🚀 Installation
 
-### **Prerequisites**
+### **Quick Demo Setup (No Dependencies)**
+```bash
+# 1. Clone repository
+git clone https://github.com/Arpit-Jindal-01/Xcelerate.git
+cd xcelerate
+
+# 2. Install minimal requirements
+pip install fastapi uvicorn
+
+# 3. Run demo (includes sample CSIDC data)
+python demo_app.py
+
+# 4. Open browser
+open http://localhost:8000
+```
+
+### **Full Enterprise Setup (Advanced)**
+
+#### **Prerequisites**
 - Python 3.9+
 - PostgreSQL 13+ with PostGIS 3.3+
 - Google Earth Engine account
 - (Optional) NVIDIA GPU with CUDA for ML acceleration
 
-### **1. Clone Repository**
-```bash
-git clone https://github.com/your-org/industrial-land-monitoring.git
-cd industrial-land-monitoring
-```
-
-### **2. Install Python Dependencies**
+#### **1. Install Python Dependencies**
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -104,7 +156,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### **3. Setup PostgreSQL + PostGIS**
+#### **2. Setup PostgreSQL + PostGIS**
 ```sql
 -- Create database
 CREATE DATABASE csidc_monitoring;
@@ -120,7 +172,7 @@ CREATE USER csidc_user WITH PASSWORD 'secure_password';
 GRANT ALL PRIVILEGES ON DATABASE csidc_monitoring TO csidc_user;
 ```
 
-### **4. Configure Environment Variables**
+#### **3. Configure Environment Variables**
 ```bash
 # Copy template
 cp .env.example .env
@@ -131,23 +183,16 @@ nano .env
 
 **Required variables:**
 - `DATABASE_URL`: PostgreSQL connection string
+- `CSIDC_PORTAL_URL`: https://cggis.cgstate.gov.in/csidc/
 - `GEE_PROJECT_ID`: Google Earth Engine project ID
 - `GEE_SERVICE_ACCOUNT`: GEE service account email
 - `GEE_PRIVATE_KEY_PATH`: Path to GEE JSON key file
 
-### **5. Authenticate Google Earth Engine**
+#### **4. Initialize Database**
 ```bash
-# Install earthengine-api
-pip install earthengine-api
-
-# Authenticate (one-time setup)
-earthengine authenticate
-
-# Or use service account (production)
-export GOOGLE_APPLICATION_CREDENTIALS="/path/to/gee-key.json"
+cd backend
+python -c "from database.connection import create_tables; create_tables()"
 ```
-
-### **6. Initialize Database**
 ```bash
 cd backend
 python -c "from database.connection import create_tables; create_tables()"
@@ -157,86 +202,139 @@ python -c "from database.connection import create_tables; create_tables()"
 
 ## 🏃 Running the Application
 
-### **Backend (FastAPI)**
+### **Option 1: Demo Mode (Recommended for Quick Start)**
 ```bash
+# Install minimal dependencies
+pip install fastapi uvicorn
+
+# Run demo application
+python demo_app.py
+
+# Access application
+open http://localhost:8000
+```
+
+### **Option 2: Full Backend (Enterprise Setup)**
+```bash
+# Install all dependencies
+pip install -r requirements.txt
+
+# Run full backend
 cd backend
 python main.py
-
-# Or with uvicorn
+# OR
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-API will be available at:
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **Health Check**: http://localhost:8000/health
+### **Available URLs:**
+- **🌐 Main Interface**: http://localhost:8000
+- **📚 API Documentation**: http://localhost:8000/api/docs  
+- **📖 ReDoc**: http://localhost:8000/api/redoc
+- **💚 Health Check**: http://localhost:8000/api/health
 
-### **Frontend**
-```bash
-cd frontend
-
-# Serve with Python
-python -m http.server 8080
-
-# Or use any static file server
-# npx serve .
-```
-
-Open browser: http://localhost:8080
+### **Frontend Features:**
+- **4 Main Tabs**: Monitoring, CSIDC Areas, Drone Surveys, Analysis
+- **Interactive Maps** with Leaflet and CSIDC styling
+- **Export Panel** for data downloads
+- **Real-time Statistics** dashboard
+- **Responsive Design** for mobile/desktop
 
 ---
 
-## 📡 API Endpoints
+## 📡 Enhanced API Endpoints
 
-### **Satellite Data**
+### **CSIDC Portal Integration**
 ```http
-GET /api/v1/satellite?plot_id=PLOT_001&start_date=2024-01-01&end_date=2024-03-31
-```
-Returns Sentinel-2 RGB, NDVI, NDBI, and Landsat thermal data.
-
-### **Plot Analysis**
-```http
-POST /api/v1/analyze/{plot_id}
-```
-Comprehensive analysis: satellite + ML + spatial + rule engine.
-
-### **Violations**
-```http
-GET /api/v1/violations/{plot_id}
-GET /api/v1/violations?violation_type=encroachment&severity=high
+GET /api/v1/csidc/areas                    # Get all CSIDC areas
+GET /api/v1/csidc/areas?district=Raipur    # Filter by district
+GET /api/v1/csidc/areas/{area_id}         # Get specific area details
+POST /api/v1/csidc/sync                   # Sync with CSIDC portal
 ```
 
-### **GeoJSON**
+### **Drone Survey Operations**
 ```http
-GET /api/v1/geojson/{plot_id}
-GET /api/v1/geojson/all
+GET /api/v1/drone/surveys                 # Get all surveys
+POST /api/v1/drone/surveys                # Create new survey
+GET /api/v1/drone/surveys?area_id=1       # Filter by area
 ```
-Returns plot boundaries and violation overlays.
+
+### **Export & Download**
+```http
+POST /api/v1/quick-export                 # Quick data export
+GET /api/v1/reports/export?format=geojson # Formatted export
+```
+
+### **System & Analysis**
+```http
+GET /api/health                           # System health check
+GET /api/v1/statistics                    # Dashboard statistics
+POST /api/v1/analysis/satellite           # Satellite analysis
+POST /api/v1/analysis/ai                  # AI model analysis
+```
+
+### **Legacy Endpoints** (Full Backend)
+```http
+GET /api/v1/satellite?plot_id=PLOT_001    # Satellite data
+POST /api/v1/analyze/{plot_id}            # Comprehensive analysis
+GET /api/v1/violations/{plot_id}          # Violations
+GET /api/v1/geojson/{plot_id}             # GeoJSON data
+```
 
 ---
 
 ## 🧪 Testing
 
-### **Test Database Connection**
+### **Demo Application Tests**
 ```bash
+# Test health endpoint
+curl http://localhost:8000/api/health
+
+# Test CSIDC areas
+curl http://localhost:8000/api/v1/csidc/areas
+
+# Test export functionality
+curl -X POST "http://localhost:8000/api/v1/quick-export" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "industrial_areas=true&format=geojson" \
+  --output test_export.geojson
+```
+
+### **Frontend Integration Tests**
+```bash
+# Test frontend serves correctly
+curl http://localhost:8000
+
+# Test API documentation
+curl http://localhost:8000/api/docs
+```
+
+### **Full Backend Tests** (Enterprise mode)
+```bash
+# Test Database Connection
 cd backend
 python database/connection.py
-```
 
-### **Test GEE Service**
-```bash
+# Test CSIDC Service  
+python services/csidc_service.py
+
+# Test GEE Service
 python services/gee_service.py
-```
 
-### **Test ML Models**
-```bash
+# Test ML Models
 python models/unet.py
 python models/siamese.py
+
+# Test Rule Engine
+python services/rule_engine.py
 ```
 
-### **Test Rule Engine**
+### **Component Verification**
 ```bash
-python services/rule_engine.py
+# Verify all components
+python verify_system.py
+
+# Test individual components
+python test_components.py
 ```
 
 ---

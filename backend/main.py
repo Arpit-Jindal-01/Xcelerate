@@ -11,14 +11,18 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 import json
 
-from database.connection import get_db, init_db_engine, create_tables, check_db_connection
-from database import models, schemas
-from services.gee_service import get_gee_service, GEEService
-from services.ml_service import get_ml_service, MLService
-from services.spatial_service import get_spatial_service, SpatialService
-from services.rule_engine import get_rule_engine, RuleEngine, DetectionData
-from utils.config import settings, setup_directories
-from utils.logger import app_logger, log_api_request, log_api_response, log_error
+from backend.database.connection import get_db, init_db_engine, create_tables, check_db_connection
+from backend.database import models, schemas
+from backend.services.gee_service import get_gee_service, GEEService
+from backend.services.ml_service import get_ml_service, MLService
+from backend.services.spatial_service import get_spatial_service, SpatialService
+from backend.services.rule_engine import get_rule_engine, RuleEngine, DetectionData
+from backend.services.csidc_service import get_csidc_service, CSIDCPortalService
+from backend.utils.config import settings, setup_directories
+from backend.utils.logger import app_logger, log_api_request, log_api_response, log_error
+
+# Import new API routers
+from backend.api import csidc_router, drone_router
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -37,6 +41,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(csidc_router.router, prefix=settings.API_V1_PREFIX)
+app.include_router(drone_router.router, prefix=settings.API_V1_PREFIX)
 
 
 # Startup and shutdown events

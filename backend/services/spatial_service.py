@@ -48,6 +48,344 @@ class SpatialService:
             geom_wkt = self._geojson_to_wkt(geometry)
             
             query = text("""
+                SELECT ST_Area(ST_GeomFromText(:geom_wkt, 4326)::geography)
+            """)
+            
+            result = self.db.execute(query, {"geom_wkt": geom_wkt}).fetchone()
+            area = result[0] if result else 0.0
+            
+            log_database_query("calculate_area", {"area_sq_m": area})
+            return area
+            
+        except Exception as e:
+            log_error(e, "calculate_area")
+            return 0.0
+    
+    def calculate_area_hectares(self, geometry: Dict[str, Any]) -> float:
+        """
+        Calculate area in hectares
+        """
+        area_sqm = self.calculate_area(geometry)
+        return area_sqm / 10000.0  # Convert to hectares
+    
+    def geometry_to_geojson(self, geom) -> Dict[str, Any]:
+        """
+        Convert PostGIS geometry to GeoJSON
+        
+        Args:
+            geom: PostGIS geometry object
+            
+        Returns:
+            GeoJSON geometry dictionary
+        """
+        try:
+            if geom is None:
+                return None
+            
+            # Convert to Shapely geometry
+            shapely_geom = to_shape(geom)
+            
+            # Convert to GeoJSON
+            return mapping(shapely_geom)
+            
+        except Exception as e:
+            log_error(e, "geometry_to_geojson")
+            return None
+    
+    def geojson_to_geometry(self, geojson: Dict[str, Any]):
+        """
+        Convert GeoJSON to PostGIS geometry
+        
+        Args:
+            geojson: GeoJSON geometry dictionary
+            
+        Returns:
+            PostGIS geometry object
+        """
+        try:
+            if geojson is None:
+                return None
+            
+            # Convert to Shapely geometry
+            shapely_geom = shape(geojson)
+            
+            # Convert to PostGIS geometry using from_shape with SRID
+            return from_shape(shapely_geom, srid=settings.SRID)
+            
+        except Exception as e:
+            log_error(e, "geojson_to_geometry")
+            return None
+    
+    def find_intersecting_areas(
+        self, 
+        geometry: Dict[str, Any], 
+        area_type: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Find CSIDC areas that intersect with given geometry
+        
+        Args:
+            geometry: GeoJSON geometry to check
+            area_type: Optional filter by area type
+            
+        Returns:
+            List of intersecting areas with intersection data
+        """
+        try:
+            from ..database.models import CSIDCArea
+            
+            geom_wkt = self._geojson_to_wkt(geometry)
+            
+            query = self.db.query(CSIDCArea).filter(
+                func.ST_Intersects(
+                    CSIDCArea.geometry,
+                    func.ST_GeomFromText(geom_wkt, settings.SRID)
+                )
+            )
+            
+            if area_type:
+                query = query.filter(CSIDCArea.area_type == area_type)
+            
+            intersecting_areas = query.all()
+            
+            results = []
+            for area in intersecting_areas:
+                # Calculate intersection area
+                intersection_query = text("""
+                    SELECT 
+                        ST_Area(ST_Intersection(
+                            :area_geom::geometry,
+                            ST_GeomFromText(:input_geom, :srid)
+                        )::geography) as intersection_area,
+                        ST_Area(:area_geom::geography) as total_area
+                """)
+                
+                intersection_result = self.db.execute(intersection_query, {
+                    "area_geom": area.geometry,
+                    "input_geom": geom_wkt,
+                    "srid": settings.SRID
+                }).fetchone()
+                
+                intersection_area = intersection_result[0] if intersection_result else 0
+                total_area = intersection_result[1] if intersection_result else 0
+                overlap_percentage = (intersection_area / total_area * 100) if total_area > 0 else 0
+                
+                results.append({
+                    "area_id": area.area_id,
+                    "name": area.name,
+                    "area_type": area.area_type.value,
+                    "intersection_area_sqm": intersection_area,
+                    "total_area_sqm": total_area,
+                    "overlap_percentage": overlap_percentage,
+                    "geometry": self.geometry_to_geojson(area.geometry)
+                })
+            
+            log_database_query("find_intersecting_areas", {"count": len(results)})
+            return results
+            
+        except Exception as e:
+            log_error(e, "find_intersecting_areas")
+            return []
+    
+    def calculate_buffer_zone(
+        self, 
+        geometry: Dict[str, Any], 
+        buffer_distance_m: float
+    ) -> Dict[str, Any]:
+        """
+        Create buffer zone around geometry
+        
+        Args:
+            geometry: GeoJSON geometry
+            buffer_distance_m: Buffer distance in meters
+            
+        Returns:
+            GeoJSON geometry of buffer zone
+        """
+        try:
+            geom_wkt = self._geojson_to_wkt(geometry)
+            
+            # Use geography for accurate distance calculation
+            query = text("""
+                SELECT ST_AsGeoJSON(
+                    ST_Transform(
+                        ST_Buffer(
+                            ST_GeomFromText(:geom_wkt, :srid)::geography,
+                            :buffer_distance
+                        )::geometry,
+                        :srid
+                    )
+                )
+            """)
+            
+            result = self.db.execute(query, {
+                "geom_wkt": geom_wkt,
+                "srid": settings.SRID,
+                "buffer_distance": buffer_distance_m
+            }).fetchone()
+            
+            if result and result[0]:
+                buffer_geojson = json.loads(result[0])
+                log_database_query("calculate_buffer_zone", {"buffer_distance_m": buffer_distance_m})
+                return buffer_geojson
+            
+            return None
+            
+        except Exception as e:
+            log_error(e, "calculate_buffer_zone")
+            return None
+    
+    def find_nearby_amenities(
+        self,
+        center_point: Dict[str, Any],
+        search_radius_km: float,
+        amenity_types: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Find amenities within radius of a point
+        
+        Args:
+            center_point: GeoJSON Point geometry
+            search_radius_km: Search radius in kilometers
+            amenity_types: Optional filter by amenity types
+            
+        Returns:
+            List of nearby amenities with distance
+        """
+        try:
+            from ..database.models import Amenity
+            
+            if center_point['type'] != 'Point':
+                raise ValueError("center_point must be a Point geometry")
+            
+            coordinates = center_point['coordinates']
+            search_radius_m = search_radius_km * 1000
+            
+            # Create query with distance calculation
+            distance_query = func.ST_Distance(
+                func.ST_GeomFromText(
+                    f"POINT({coordinates[0]} {coordinates[1]})",
+                    settings.SRID
+                ).cast(Geography),
+                Amenity.geometry.cast(Geography)
+            )
+            
+            query = self.db.query(
+                Amenity,
+                distance_query.label('distance_m')
+            ).filter(
+                distance_query <= search_radius_m
+            )
+            
+            if amenity_types:
+                query = query.filter(Amenity.amenity_type.in_(amenity_types))
+            
+            # Order by distance
+            query = query.order_by('distance_m')
+            
+            results = []
+            for amenity, distance in query.all():
+                results.append({
+                    "amenity_id": amenity.amenity_id,
+                    "name": amenity.name,
+                    "amenity_type": amenity.amenity_type.value,
+                    "description": amenity.description,
+                    "distance_km": round(distance / 1000, 2),
+                    "distance_m": round(distance, 1),
+                    "contact_info": amenity.contact_info,
+                    "operating_hours": amenity.operating_hours,
+                    "geometry": self.geometry_to_geojson(amenity.geometry)
+                })
+            
+            log_database_query("find_nearby_amenities", {
+                "count": len(results),
+                "radius_km": search_radius_km
+            })
+            return results
+            
+        except Exception as e:
+            log_error(e, "find_nearby_amenities")
+            return []
+    
+    def get_area_statistics(self, area_id: int) -> Dict[str, Any]:
+        """
+        Calculate comprehensive statistics for a CSIDC area
+        
+        Args:
+            area_id: CSIDC area ID
+            
+        Returns:
+            Dictionary containing area statistics
+        """
+        try:
+            from ..database.models import CSIDCArea, Plot, Violation, DroneDataCollection
+            
+            # Get the area
+            area = self.db.query(CSIDCArea).filter(CSIDCArea.area_id == area_id).first()
+            if not area:
+                return {}
+            
+            stats = {
+                "area_id": area_id,
+                "name": area.name,
+                "area_type": area.area_type.value,
+                "size_hectares": area.size_hectares
+            }
+            
+            # Calculate total area using PostGIS
+            area_sqm = self.calculate_area(self.geometry_to_geojson(area.geometry))
+            stats["calculated_area_hectares"] = area_sqm / 10000
+            
+            # Count intersecting plots
+            plots_query = self.db.query(Plot).filter(
+                func.ST_Intersects(Plot.geometry, area.geometry)
+            )
+            stats["intersecting_plots"] = plots_query.count()
+            
+            # Count violations in the area
+            violations_query = self.db.query(Violation).join(Plot).filter(
+                func.ST_Intersects(Plot.geometry, area.geometry)
+            )
+            stats["total_violations"] = violations_query.count()
+            stats["unresolved_violations"] = violations_query.filter(
+                Violation.is_resolved == False
+            ).count()
+            
+            # Drone survey data
+            drone_surveys = self.db.query(DroneDataCollection).filter(
+                DroneDataCollection.area_id == area_id
+            ).count()
+            stats["drone_surveys_conducted"] = drone_surveys
+            
+            # Nearby amenities count
+            if area.area_type.value in ['industrial_area', 'land_bank']:
+                center_point = self._get_centroid(area.geometry)
+                if center_point:
+                    nearby = self.find_nearby_amenities(center_point, 5.0)  # 5km radius
+                    stats["nearby_amenities"] = len(nearby)
+            
+            log_database_query("get_area_statistics", {"area_id": area_id})
+            return stats
+            
+        except Exception as e:
+            log_error(e, "get_area_statistics")
+            return {}
+    
+    def _get_centroid(self, geometry) -> Optional[Dict[str, Any]]:
+        """Get centroid of geometry as GeoJSON Point"""
+        try:
+            query = text("""
+                SELECT ST_AsGeoJSON(ST_Centroid(:geom))
+            """)
+            
+            result = self.db.execute(query, {"geom": geometry}).fetchone()
+            if result and result[0]:
+                return json.loads(result[0])
+            
+            return None
+            
+        except Exception:
+            return None
                 SELECT ST_Area(ST_GeographyFromText(:geom_wkt))
             """)
             
